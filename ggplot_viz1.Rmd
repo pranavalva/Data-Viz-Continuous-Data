@@ -1,0 +1,171 @@
+---
+title: "Histograms And Density Curves in R"
+author: "Pranav Alva"
+date: "11/25/2018"
+output: html_document
+---
+
+### 1. Emplotee Data - Salary
+
+```{r echo=FALSE, plot=TRUE, warning=FALSE, results='hide', message=FALSE}
+library(readr)
+library(ggplot2)
+emp <- read_csv("EmployeeCompensation.csv")
+box<-ggplot(emp, aes(x = factor(Year), y = Salaries)) + geom_boxplot() + xlab("Years") +
+  ylab("Salaries") +
+  ggtitle("Boxplot of Employee Salaries By Year")
+print(box)
+```
+
+#####Observations:
+#####1) The distributions of salaries across the years are observed to have similar medians with marginal increase from 2013 ro 2017. 
+#####2) The outliers in the more recent years are observed be of progressively higher value.
+
+```{r echo=FALSE, plot=TRUE, warning=FALSE, results='hide', message=FALSE}
+hist <- ggplot(emp, aes(Salaries)) + geom_histogram(color = "black", fill = "lightblue", binwidth = 30000) + facet_grid(.~factor(emp$Year)) + xlab("Salaries") +
+  ylab("Frequency") +
+  ggtitle("Histogram of Employee Salaries By Year")
+print(hist)
+```
+
+#####Observations:
+#####1) The histograms show the bimodal nature of the Salary data across years. 
+#####1) There also appears to be a right skew in the distributions.
+
+```{r echo=FALSE, plot=TRUE, warning=FALSE, results='hide', message=FALSE}
+dens<-ggplot() + 
+  geom_density(data=emp, aes(x=Salaries, group=factor(Year),
+  fill=factor(Year)),alpha=0.5, adjust=2) + 
+  xlab("Salary") +
+  ylab("Density") +
+  ggtitle("Density Curve of Employee Salaries By Year") +
+  scale_fill_discrete(name = "Year")
+print(dens)
+```
+  
+
+#####Observations:
+#####1) 2013 showed relatively higher density of data in the second modal region as compared to other years
+#####2) 2015 seemed to have relatively higher density of data in the first modal region as compared to the other years
+
+Summing up the results
+
+#####Observations:
+#####1) The boxplots in a) gives us a picture of the medians and quartiles of the salaries each year while highlighting the outliers.
+#####2) The histograms in b) gives us a idea of the shape of the data, highlighting its bi-modal nature and also indicating skew.
+#####3) The density plots in c) indicate the probability of finding data at a particular range of salaries across years.
+#####4) All the graphs indicate the presence of negative values of salary in the data set
+
+### 2. Employee Data - Overtime
+
+```{r echo=FALSE, plot=TRUE, warning=FALSE, results='hide', message=FALSE}
+colnames(emp)[4]<-"Organisation_Group"
+box2 <- ggplot(emp, aes(x = reorder(Organisation_Group, -Overtime, median),y = Overtime)) + geom_boxplot() + coord_flip() + 
+  xlab("Organisation Group") +
+  ylab("Overtime") +
+  ggtitle("Boxplot of Overtime across Organisational Groups")
+print(box2)
+```
+
+
+#####Observations:
+#####1) Due to occurence of a large number of zeros in the metric Overtime, we are unable to get a meaningful distribution in the boxplot
+
+```{r echo=FALSE, plot=TRUE, warning=FALSE, results='hide', message=FALSE}
+hist1 <- ggplot(emp[emp[,"Overtime"]>0,], aes(Overtime)) + geom_histogram(color = "blue", fill = "lightblue", binwidth = 15000) + facet_grid(.~emp[emp[,"Overtime"]>0,]$Organisation_Group) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+  xlab("Overtime") +
+  ylab("Frequency") +
+  ggtitle("Histograms of Overtime across Organisational Groups") + geom_rug(sides="b")
+print(hist1)
+```
+
+#####Observations:
+#####1) Since not every employee works overtime, it makes sense to filter out the zeroes and then plot a histogram.
+#####2) This strategy gives us a better distribution on the histogram and a rug plot enables us to view the outliers with low frequency
+
+### 3. Emplotee Data - Boundaries
+
+```{r echo=FALSE, plot=TRUE, warning=FALSE, results='asis', message=FALSE}
+x <- c(32, 23, 20, 30, 40, 57, 69, 78, 60, 74, 99, 18, 43, 89, 77, 39, 8, 54, 62, 49)
+print(x)
+op <- par(mfrow = c(1, 2), las = 1)
+hist(x, col = "lightblue", ylim = c(0, 8), main="Histogram (Right Open)")
+hist(x, col = "lightblue", right = FALSE, ylim = c(0, 8), main="Histogram (Right Closed)")
+```
+
+
+```{r echo=FALSE, plot=TRUE, warning=FALSE, results='hide', message=FALSE}
+op <- par(mfrow = c(1, 2), las = 1)
+hist(x, col = "lightblue", ylim = c(0, 8), main="Histogram (Right Open)", breaks=c(5,15,25,35,45,55,65,75,85,95,105))
+hist(x, col = "lightblue", right = FALSE, ylim = c(0, 8), main="Histogram (Right Closed)", breaks=c(5,15,25,35,45,55,65,75,85,95,105))
+```
+
+#####Strategy:
+#####Adjusting the bins ensures that none of the values fall on the boundaries of the intervals and thus both histograms, right open and right closed become identical
+
+### 4. Beavers Data
+
+[10 points]
+
+```{r echo=FALSE, plot=TRUE, warning=FALSE, results='hide', message=FALSE}
+op <- par(mfrow = c(1, 2), las = 1)
+qqnorm(beaver1[,"temp"])
+qqline(beaver1[,"temp"], col = "red")
+
+qqnorm(beaver2[,"temp"])
+qqline(beaver2[,"temp"], col = "red")
+```
+
+#####Observation:
+#####The body temperature of beaver1 appears to be more normally distributed
+
+```{r echo=FALSE, plot=TRUE, warning=FALSE, results='hide', message=FALSE}
+ggplot(beaver1, aes(temp)) + geom_histogram(aes(y = ..density..),
+                                    fill = "lightblue",
+                                    color = "black") +
+  geom_density(lwd = 1.5) +
+  stat_function(fun = dnorm, args = list(mean = 36.86219, sd = 0.1934217), color = "red", lwd = 1.5) + 
+  xlab("Body Temperature") +
+  ylab("Density") +
+  ggtitle("Density Histogram/Curve Vs Theoretical Normal Curve [Beaver 1]")
+
+ggplot(beaver2, aes(temp)) + geom_histogram(aes(y = ..density..),
+                                    fill = "lightblue",
+                                    color = "black") +
+  geom_density(lwd = 1.5) +
+  stat_function(fun = dnorm, args = list(mean = 37.5967, sd = 0.4467889), color = "red", lwd = 1.5) + 
+  xlab("Body Temperature") +
+  ylab("Density") +
+  ggtitle("Density Histogram/Curve Vs Theoretical Normal Curve [Beaver 2]")
+
+```
+
+#####Observation:
+#####The body temperature of beaver1 seems to be more normally distributed from the density histogram with density curves and the theoretical normal curves
+
+```{r echo=FALSE, plot=TRUE, warning=FALSE, results='asis', message=FALSE}
+
+shapiro.test(beaver1$temp)
+
+shapiro.test(beaver2$temp)
+
+```
+
+#####Observation:
+#####Both the distribution of body temperatures from beaver1 and beaver2 appear not to be coming from a normal distribution as the p-values suggest that we reject the null hypothesis [Null hypothesis - Items belong to a sample of a normal distribution]
+
+### 5. Doctors
+
+```{r echo=FALSE, plot=TRUE, warning=FALSE, results='asis', message=FALSE}
+ggplot(boot::breslow, aes(x = age, y = y)) + 
+    geom_col( fill = "thistle") +
+    ggtitle("Relationship between Age and Coronary disease of doctors") +
+    ylab("Coronary Disease")
+    
+ggplot(boot::breslow, aes(x = factor(smoke), y = y)) + 
+    geom_col( fill = "thistle") +
+    ggtitle("Relationship between Smoke and Coronary disease of doctors") +
+    xlab("Smoking") +
+    ylab("Coronary Disease")
+```
+
